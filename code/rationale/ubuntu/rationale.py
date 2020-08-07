@@ -2,7 +2,8 @@ import sys
 import time
 import argparse
 import gzip
-import cPickle as pickle
+import pickle
+import collections
 
 from prettytable import PrettyTable
 import numpy as np
@@ -45,7 +46,7 @@ class Generator(object):
 
         layers = self.layers = [ ]
         layer_type = args.layer.lower()
-        for i in xrange(2):
+        for i in range(2):
             if layer_type == "rcnn":
                 l = RCNN(
                         n_in = n_e,# if i == 0 else n_d,
@@ -99,13 +100,13 @@ class Generator(object):
         #
         z_pred = self.z_pred = theano.gradient.disconnected_grad(z_pred)
         self.sample_updates = sample_updates
-        print "z_pred", z_pred.ndim
+        # print "z_pred", z_pred.ndim
 
         self.p1 = T.sum(masks*z_pred) / (T.sum(masks) + 1e-8)
 
         # len*batch*1
         probs = output_layer.forward_all(h_final, z_pred)
-        print "probs", probs.ndim
+        # print "probs", probs.ndim
 
         logpz = - T.nnet.binary_crossentropy(probs, z_pred) * masks
         logpz = self.logpz = logpz.reshape(x.shape)
@@ -261,7 +262,7 @@ class Encoder:
         self.h_final = h_final
         self.hz_final = hz_final
 
-        say("h_final dtype: {}\n".format(ht.dtype))
+        say("h_final dtype: {}\n".format(ht.shape))
 
         # For testing:
         #   first one in batch is query, the rest are candidate questions
@@ -326,7 +327,7 @@ class Encoder:
         beta = args.beta
         self.cost_g = cost_logpz + generator.l2_cost
         self.cost_e = hinge_loss + loss*beta + l2_reg
-        print "cost dtype", self.cost_g.dtype, self.cost_e.dtype
+        # print "cost dtype", self.cost_g.dtype, self.cost_e.dtype
 
     def normalize_2d(self, x, eps=1e-6):
         # x is batch*d
@@ -442,7 +443,8 @@ class Model(object):
                 inputs = [ self.x, self.triples, self.pairs ],
                 outputs = [ self.encoder.obj, self.encoder.loss, \
                         self.encoder.sparsity_cost, self.generator.p1, gnorm_g ],
-                updates = updates_g.items() + updates_e.items() + self.generator.sample_updates,
+                # updates = updates_g.items() + updates_e.items() + self.generator.sample_updates,
+                updates = collections.OrderedDict(list(updates_g.items()) + list(updates_e.items()) + list(self.generator.sample_updates.items())),
                 #no_default_updates = True,
                 on_unused_input= "ignore"
             )
@@ -477,7 +479,7 @@ class Model(object):
         test_MAP = test_MRR = test_P1 = test_P5 = 0
         start_time = 0
         max_epoch = args.max_epoch
-        for epoch in xrange(max_epoch):
+        for epoch in range(max_epoch):
             unchanged += 1
             if unchanged > 20: break
 
@@ -498,7 +500,7 @@ class Model(object):
                 train_scost = 0.0
                 train_p1 = 0.0
 
-                for i in xrange(N):
+                for i in range(N):
                     # get current batch
                     idts, triples, pairs = train_batches[i]
 
@@ -650,7 +652,7 @@ class Model(object):
         tot_selected = 0.0
         res = [ ]
         output_data = [ ]
-        for i in xrange(len(data)):
+        for i in range(len(data)):
             idts, labels = data[i]
             pid, qids, _ = data_raw[i]
             scores, p1, z = zeval_func(idts)
