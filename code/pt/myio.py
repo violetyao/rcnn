@@ -19,9 +19,9 @@ def read_corpus(path):
     fopen = gzip.open if path.endswith(".gz") else open
     with fopen(path) as fin:
         for line in fin:
-            id, title, body = line.split("\t")
+            id, title, body = line.split(b"\t")
             if len(title) == 0:
-                print id
+                # print(id)
                 empty_cnt += 1
                 continue
             title = title.strip().split()
@@ -33,7 +33,7 @@ def read_corpus(path):
 def create_embedding_layer(raw_corpus, n_d, embs=None, \
         cut_off=2, unk="<unk>", padding="<padding>", fix_init_embs=True):
 
-    cnt = Counter(w for id, pair in raw_corpus.iteritems() \
+    cnt = Counter(w for id, pair in raw_corpus.items() \
                         for x in pair for w in x)
     cnt[unk] = cut_off + 1
     cnt[padding] = cut_off + 1
@@ -41,7 +41,7 @@ def create_embedding_layer(raw_corpus, n_d, embs=None, \
     cnt["</s>"] = cut_off + 1
     embedding_layer = EmbeddingLayer(
             n_d = n_d,
-            #vocab = (w for w,c in cnt.iteritems() if c > cut_off),
+            #vocab = (w for w,c in cnt.items() if c > cut_off),
             vocab = [ unk, padding, "<s>", "</s>" ],
             embs = embs,
             fix_init_embs = fix_init_embs
@@ -55,14 +55,14 @@ def create_idf_weights(corpus_path, embedding_layer):
     fopen = gzip.open if corpus_path.endswith(".gz") else open
     with fopen(corpus_path) as fin:
         for line in fin:
-            id, title, body = line.split("\t")
+            id, title, body = line.split(b"\t")
             lst.append(title)
             lst.append(body)
     vectorizer.fit_transform(lst)
 
     idfs = vectorizer.idf_
     avg_idf = sum(idfs)/(len(idfs)+0.0)/4.0
-    weights = np.array([ avg_idf for i in xrange(embedding_layer.n_V) ],
+    weights = np.array([ avg_idf for i in range(embedding_layer.n_V) ],
                     dtype = theano.config.floatX)
     vocab_map = embedding_layer.vocab_map
     for word, idf_value in zip(vectorizer.get_feature_names(), idfs):
@@ -71,11 +71,20 @@ def create_idf_weights(corpus_path, embedding_layer):
             weights[id] = idf_value
     return theano.shared(weights, name="word_weights")
 
+# def map_corpus(raw_corpus, embedding_layer, max_len=100):
+#     ids_corpus = { }
+#     for id, pair in raw_corpus.items():
+#         ids_corpus[id] = (embedding_layer.map_to_ids(pair[0], filter_oov=True),
+#                           embedding_layer.map_to_ids(pair[1], filter_oov=True)[:max_len])
+#     return ids_corpus
+    
 def map_corpus(raw_corpus, embedding_layer, max_len=100):
     ids_corpus = { }
-    for id, pair in raw_corpus.iteritems():
-        ids_corpus[id] = (embedding_layer.map_to_ids(pair[0], filter_oov=True),
-                          embedding_layer.map_to_ids(pair[1], filter_oov=True)[:max_len])
+    for id, pair in raw_corpus.items():
+        item = (embedding_layer.map_to_ids(pair[0], filter_oov=False),
+                          embedding_layer.map_to_ids(pair[1], filter_oov=False)[:max_len])
+        ids_corpus[id] = item
+    # print(ids_corpus)
     return ids_corpus
 
 def read_annotations(path, K_neg=0, prune_pos_cnt=10):
@@ -107,7 +116,8 @@ def read_annotations(path, K_neg=0, prune_pos_cnt=10):
 def create_batches(ids_corpus, data, batch_size, padding_id,
                         bos_id, eos_id, auto_encode=True, perm=None):
     if perm is None:
-        perm = range(len(data))
+        # perm = range(len(data))
+        perm = data
         random.shuffle(perm)
     pair_set = set()
     for pid, qids, qlabels in data:
@@ -127,7 +137,7 @@ def create_batches(ids_corpus, data, batch_size, padding_id,
     #bodies2 = [ ]
     batches = [ ]
     N = len(pair_lst)
-    for i in xrange(N):
+    for i in range(N):
         pid, qid = pair_lst[i]
         if pid not in ids_corpus: continue
         if qid not in ids_corpus: continue
@@ -151,11 +161,11 @@ def create_batches(ids_corpus, data, batch_size, padding_id,
 def create_eval_batches(ids_corpus, data, padding_id):
     lst = [ ]
     for pid, qids, qlabels in data:
-        t1, b1 = ids_corpus[pid]
+        t1, b1 = ids_corpus[str.encode(pid)]
         titles = [ t1 ]
         bodies = [ b1 ]
         for qid in qids:
-            t2, b2 = ids_corpus[qid]
+            t2, b2 = ids_corpus[str.encode(qid)]
             titles.append(t2)
             bodies.append(b2)
         lst.append((titles, bodies, np.array(qlabels, dtype="int32")))
