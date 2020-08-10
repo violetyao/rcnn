@@ -2,7 +2,8 @@ import sys
 import time
 import argparse
 import gzip
-import cPickle as pickle
+# import cPickle as pickle
+import pickle
 
 from prettytable import PrettyTable
 import numpy as np
@@ -205,7 +206,7 @@ class Model:
         test_MAP = test_MRR = test_P1 = test_P5 = 0
         start_time = 0
         max_epoch = args.max_epoch
-        for epoch in xrange(max_epoch):
+        for epoch in range(max_epoch):
             unchanged += 1
             if unchanged > 15: break
 
@@ -219,7 +220,7 @@ class Model:
             train_loss = 0.0
             train_cost = 0.0
 
-            for i in xrange(N):
+            for i in range(N):
                 # get current batch
                 idts, idbs, idps = train_batches[i]
 
@@ -510,6 +511,6 @@ if __name__ == "__main__":
             default = ""
         )
     args = argparser.parse_args()
-    print args
-    print ""
+    print(args)
+    print("")
     main(args)
