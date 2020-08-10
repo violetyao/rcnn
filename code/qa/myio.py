@@ -112,9 +112,8 @@ def read_annotations(path, K_neg=20, prune_pos_cnt=10):
 def create_batches(ids_corpus, data, batch_size, padding_id, perm=None, pad_left=True):
     if perm is None:
         perm = list(range(len(data)))
-        # perm = data
         random.shuffle(perm)
-    print("len(data) is: ", len(data))
+    # print("len(data) is: ", len(data))
     N = len(data)
     cnt = 0
     pid2id = {}
@@ -141,7 +140,6 @@ def create_batches(ids_corpus, data, batch_size, padding_id, perm=None, pad_left
         triples += [ [pid,x]+neg for x in pos ]
 
         if cnt == batch_size or u == N-1:
-            # print("comes to the line cnt == batch_size or u == N-1")
             titles, bodies = create_one_batch(titles, bodies, padding_id, pad_left)
             triples = create_hinge_batch(triples)
             batches.append((titles, bodies, triples))
@@ -150,7 +148,7 @@ def create_batches(ids_corpus, data, batch_size, padding_id, perm=None, pad_left
             triples = [ ]
             pid2id = {}
             cnt = 0
-    print("len(batches) is ", len(batches))
+    # print("len(batches) is ", len(batches))
     return batches
 
 def create_eval_batches(ids_corpus, data, padding_id, pad_left):
@@ -159,7 +157,6 @@ def create_eval_batches(ids_corpus, data, padding_id, pad_left):
         titles = [ ]
         bodies = [ ]
         for id in [pid]+qids:
-            # t, b = ids_corpus[str.encode(id)]
             t, b = ids_corpus[id]
             titles.append(t)
             bodies.append(b)
