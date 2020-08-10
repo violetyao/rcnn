@@ -114,8 +114,7 @@ def read_annotations(path, K_neg=20, prune_pos_cnt=10):
 def create_batches(ids_corpus, data, batch_size, padding_id, \
                       perm=None, pad_left=True, merge=0):
   if perm is None:
-      # perm = range(len(data))
-      perm = data
+      perm = list(range(len(data)))
       random.shuffle(perm)
 
   N = len(data)
@@ -129,8 +128,7 @@ def create_batches(ids_corpus, data, batch_size, padding_id, \
   for u in range(N):
       i = perm[u]
       # print(i)
-      # pid, qids, qlabels = data[i]
-      pid, qids, qlabels = i
+      pid, qids, qlabels = data[i]
       if pid not in ids_corpus: continue
       cnt += 1
       pos = 0
