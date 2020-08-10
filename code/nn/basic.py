@@ -297,7 +297,7 @@ class EmbeddingLayer(object):
         if filter_oov:
             not_oov = lambda x: x!=oov_id
             return np.array(
-                    filter(not_oov, [ vocab_map.get(x, oov_id) for x in words ]),
+                    list(filter(not_oov, [ vocab_map.get(x, oov_id) for x in words ])),
                     dtype="int32"
                 )
         else:

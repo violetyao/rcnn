@@ -21,6 +21,7 @@ def read_corpus(path):
         for line in fin:
             line = line.decode("utf-8") 
             id, title, body = line.split("\t")
+            # id = int(id)
             if len(title) == 0:
                 # print(id)
                 empty_cnt += 1
@@ -74,8 +75,10 @@ def create_idf_weights(corpus_path, embedding_layer):
 def map_corpus(raw_corpus, embedding_layer, max_len=100):
     ids_corpus = { }
     for id, pair in raw_corpus.items():
-        item = (embedding_layer.map_to_ids(pair[0], filter_oov=False),
-                          embedding_layer.map_to_ids(pair[1], filter_oov=False)[:max_len])
+        # item = (embedding_layer.map_to_ids(pair[0], filter_oov=False),
+        #         embedding_layer.map_to_ids(pair[1], filter_oov=False)[:max_len])
+        item = (embedding_layer.map_to_ids(pair[0], filter_oov=True),
+                embedding_layer.map_to_ids(pair[1], filter_oov=True)[:max_len])
         ids_corpus[id] = item
     # print(ids_corpus)
     return ids_corpus
@@ -86,6 +89,8 @@ def read_annotations(path, K_neg=20, prune_pos_cnt=10):
         for line in fin:
             parts = line.split("\t")
             pid, pos, neg = parts[:3]
+            # pos = [int(p) for p in pos.split()]
+            # neg = [int(n) for n in neg.split()]
             pos = pos.split()
             neg = neg.split()
             if len(pos) == 0 or (len(pos) > prune_pos_cnt and prune_pos_cnt != -1): continue
